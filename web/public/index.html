@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Radio — 24/7 Music Stream</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎵 Vibe Radio</h1>
+            <p class="tagline">24/7 Non-Stop Vibes</p>
+            <div class="stats">
+                <span id="listener-count">0 listeners</span>
+            </div>
+        </header>
+
+        <main>
+            <!-- Player Section -->
+            <section class="player-section">
+                <div class="now-playing">
+                    <div class="album-art">🎧</div>
+                    <div class="track-info">
+                        <h2 id="track-title">Loading...</h2>
+                        <p id="track-artist">Vibe Radio</p>
+                    </div>
+                </div>
+
+                <div class="player-controls">
+                    <button id="play-btn" class="btn-play">▶ Play</button>
+                    <input type="range" id="volume-slider" min="0" max="100" value="70" class="volume-slider">
+                    <span id="volume-label">70%</span>
+                </div>
+
+                <audio id="radio-stream" preload="none">
+                    <source src="http://localhost:8000/radio" type="audio/mpeg">
+                    Your browser does not support the audio element.
+                </audio>
+            </section>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="playlist">Playlist</button>
+                <button class="tab-btn" data-tab="requests">Requests</button>
+                <button class="tab-btn" data-tab="chat">Chat</button>
+            </div>
+
+            <!-- Playlist Tab -->
+            <section id="playlist-tab" class="tab-content active">
+                <h3>Coming Up Next</h3>
+                <div id="playlist-container" class="list-container">
+                    <p class="loading">Loading playlist...</p>
+                </div>
+            </section>
+
+            <!-- Requests Tab -->
+            <section id="requests-tab" class="tab-content">
+                <h3>Request a Song</h3>
+                <div class="request-form">
+                    <input type="text" id="request-url" placeholder="Paste YouTube URL here..." />
+                    <button id="submit-request" class="btn-primary">Submit Request</button>
+                </div>
+                <div id="request-status" class="status-message"></div>
+
+                <h4>Pending Requests</h4>
+                <div id="requests-container" class="list-container">
+                    <p class="empty">No pending requests</p>
+                </div>
+            </section>
+
+            <!-- Chat Tab -->
+            <section id="chat-tab" class="tab-content">
+                <h3>Live Chat</h3>
+                <div id="chat-messages" class="chat-messages">
+                    <p class="system-message">Welcome to Vibe Radio! Chat with other listeners.</p>
+                </div>
+                <div class="chat-input">
+                    <input type="text" id="chat-message" placeholder="Type a message..." maxlength="200" />
+                    <button id="send-chat" class="btn-primary">Send</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Powered by Icecast + Liquidsoap + yt-dlp</p>
+        </footer>
+    </div>
+
+    <script src="/js/player.js"></script>
+    <script src="/js/chat.js"></script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<icecast>
+  <location>Vibe Radio</location>
+  <admin>admin@vibe.radio</admin>
+
+  <limits>
+    <clients>100</clients>
+    <sources>3</sources>
+    <queue-size>524288</queue-size>
+    <client-timeout>30</client-timeout>
+    <header-timeout>15</header-timeout>
+    <source-timeout>10</source-timeout>
+    <burst-on-connect>1</burst-on-connect>
+    <burst-size>65535</burst-size>
+  </limits>
+
+  <authentication>
+    <source-password>hackme-source</source-password>
+    <relay-password>hackme-relay</relay-password>
+    <admin-user>admin</admin-user>
+    <admin-password>hackme-admin</admin-password>
+  </authentication>
+
+  <hostname>localhost</hostname>
+  <listen-socket>
+    <port>8000</port>
+    <bind-address>0.0.0.0</bind-address>
+  </listen-socket>
+
+  <mount type="normal">
+    <mount-name>/radio</mount-name>
+    <username>source</username>
+    <password>hackme-source</password>
+    <max-listeners>100</max-listeners>
+    <public>1</public>
+    <stream-name>Vibe Radio</stream-name>
+    <stream-description>Non-stop vibes — powered by yt-dlp + liquidsoap</stream-description>
+    <genre>Varied</genre>
+    <bitrate>192</bitrate>
+    <type>audio/mpeg</type>
+  </mount>
+
+  <mount type="normal">
+    <mount-name>/live</mount-name>
+    <username>source</username>
+    <password>hackme-source</password>
+    <max-listeners>0</max-listeners>
+    <public>0</public>
+    <hidden>0</hidden>
+  </mount>
+
+  <fileserve>1</fileserve>
+
+  <paths>
+    <basedir>/usr/share/icecast2</basedir>
+    <logdir>/var/log/icecast2</logdir>
+    <webroot>/usr/share/icecast2/web</webroot>
+    <adminroot>/usr/share/icecast2/admin</adminroot>
+    <alias source="/" destination="/status.xsl"/>
+  </paths>
+
+  <logging>
+    <accesslog>access.log</accesslog>
+    <errorlog>error.log</errorlog>
+    <loglevel>3</loglevel>
+    <logsize>10000</logsize>
+  </logging>
+
+  <security>
+    <chroot>0</chroot>
+  </security>
+</icecast>
