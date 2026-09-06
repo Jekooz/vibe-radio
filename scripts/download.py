@@ -15,6 +15,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import uuid
 from pathlib import Path
 
@@ -32,6 +33,9 @@ def download(url: str, into: Path) -> Path:
     into.mkdir(parents=True, exist_ok=True)
 
     # Probe metadata first
+    title = "untitled"
+    artist = "Unknown"
+
     try:
         raw = subprocess.check_output(
             ["yt-dlp", "--no-playlist", "--print-json", "--skip-download", url],
@@ -39,36 +43,43 @@ def download(url: str, into: Path) -> Path:
             timeout=30,
         )
         meta = json.loads(raw.strip().splitlines()[0])
-    except Exception:
-        meta = {}
+        title = sanitize(meta.get("title", "untitled"))
+        artist = sanitize(meta.get("uploader", "Unknown"))
+    except Exception as e:
+        print(f"Warning: Could not probe metadata: {e}", file=sys.stderr)
 
-    title = sanitize(meta.get("title", "untitled"))
-    artist = sanitize(meta.get("uploader", "Unknown"))
     uid = uuid.uuid4().hex[:8]
     out_tmpl = str(into / f"{artist} - {title} [{uid}].%(ext)s")
 
-    subprocess.run(
-        [
-            "yt-dlp",
-            "--no-playlist",
-            "-x",
-            "--audio-format", "mp3",
-            "--audio-quality", "192K",
-            "--embed-metadata",
-            "-o", out_tmpl,
-            url,
-        ],
-        check=True,
-        timeout=300,
-    )
+    try:
+        subprocess.run(
+            [
+                "yt-dlp",
+                "--no-playlist",
+                "-x",
+                "--audio-format", "mp3",
+                "--audio-quality", "192K",
+                "--embed-metadata",
+                "-o", out_tmpl,
+                url,
+            ],
+            check=True,
+            timeout=300,
+        )
+    except subprocess.CalledProcessError as e:
+        print(f"Error: yt-dlp failed with exit code {e.returncode}", file=sys.stderr)
+        raise
 
     # Find the produced file
-    for p in into.glob(f"*[{uid}].mp3"):
-        return p
-    # fallback: newest mp3
+    files = sorted(into.glob(f"*[{uid}].mp3"), key=lambda p: p.stat().st_mtime)
+    if files:
+        return files[-1]
+
+    # Fallback: newest mp3
     files = sorted(into.glob("*.mp3"), key=lambda p: p.stat().st_mtime)
     if files:
         return files[-1]
+
     raise RuntimeError("yt-dlp produced no mp3 file")
 
 
@@ -88,9 +99,13 @@ def main():
     dest = REQUESTS_DIR if args.requests else QUEUE_DIR
     m3u = dest / ("requests.m3u" if args.requests else "queue.m3u")
 
-    track = download(args.url, dest)
-    append_to_m3u(m3u, track)
-    print(str(track), flush=True)
+    try:
+        track = download(args.url, dest)
+        append_to_m3u(m3u, track)
+        print(str(track), flush=True)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

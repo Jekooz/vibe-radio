@@ -8,33 +8,32 @@ icecast_host     = "localhost"
 icecast_port     = 8000
 icecast_password = "hackme-source"
 
-# ── helper: single_replaygain (normalise volume lightly) ────
+# ── helper: replaygain normalize ────
 def radio_track(s)
   s = replaygain(s)
   s
 end
 
-# ── playlist from local files ───────────────────────────────
-#  The web app downloads yt-dlp tracks into /opt/radio/queue/
-playlist_dir = "/opt/radio/queue"
-
-#  Requests are staged into /opt/radio/requests/ — highest priority
+# ── Playlists ───────────────────────────────────────────────
+# Requests (high priority)
 requests = playlist(
   id="requests",
   mode="normal",
   reload_mode="watch",
+  reload=30,
   "/opt/radio/requests/requests.m3u"
 )
 
-#  Regular queue
+# Main queue
 queue = playlist(
   id="queue",
   mode="normal",
   reload_mode="watch",
+  reload=30,
   "/opt/radio/queue/queue.m3u"
 )
 
-#  Live DJ source (e.g. BUTT / Mixxx can connect to /live)
+# ── Live DJ source (e.g. BUTT / Mixxx can connect to /live) ────
 live = input.harbor(
   id="live",
   port=8001,
@@ -44,8 +43,8 @@ live = input.harbor(
   buffer=5.
 )
 
-# ── fallback logic ──────────────────────────────────────────
-#  Priority: live  >  requests  >  queue  >  silence fallback
+# ── Fallback logic ──────────────────────────────────────────
+# Priority: live  >  requests  >  queue  >  silence
 radio = fallback(track_sensitive=false, [
   live,
   requests,
@@ -54,25 +53,25 @@ radio = fallback(track_sensitive=false, [
 
 radio = radio_track(radio)
 
-# ── crossfade ───────────────────────────────────────────────
+# ── Crossfade ───────────────────────────────────────────────
 radio = crossfade(duration=3., radio)
 
-# ── metadata / now-playing callback ────────────────────────
-#  Writes current track to a JSON file the web app polls.
+# ── Metadata callback for now-playing ───────────────────────
 def on_track(m) =
   title  = m["title"]
   artist = m["artist"]
   if title == "" then
     title = m["filename"]
   end
-  json = '{"title":"#{title}","artist":"#{artist}"}'
-  _ = process.run("/opt/radio/scripts/update-nowplaying.sh '#{string.replace(pattern="'", fun(s)->"\\'")(title)}' '#{string.replace(pattern="'", fun(s)->"\\'")(artist)}'")
+  # Write to file for web app to pick up
+  json = '{"title":"#{string.replace(pattern="'", fun(s)->"\\'")(title)}","artist":"#{string.replace(pattern="'", fun(s)->"\\'")(artist)}"}'
+  _ = process.run("echo '#{json}' > /opt/radio/nowplaying.json")
   ()
 end
 
 radio.on_metadata(on_track)
 
-# ── output to Icecast ───────────────────────────────────────
+# ── Output to Icecast ───────────────────────────────────────
 output.icecast(
   %mp3(bitrate=192, samplerate=44100, stereo=true),
   host=icecast_host, port=icecast_port,
@@ -84,6 +83,6 @@ output.icecast(
   radio
 )
 
-# ── telnet server (handy for debugging) ─────────────────────
+# ── Telnet server for debugging ─────────────────────────────
 settings.server.telnet := true
 settings.server.telnet.port := 1234
