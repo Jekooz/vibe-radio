@@ -18,7 +18,7 @@ echo "[1/8] Updating system..."
 apt update && apt upgrade -y
 
 echo "[2/8] Installing dependencies..."
-apt install -y icecast2 liquidsoap ffmpeg python3 python3-pip git curl nodejs npm
+apt install -y icecast2 liquidsoap ffmpeg python3 git curl nodejs
 
 echo "[3/8] Installing yt-dlp..."
 # Download latest yt-dlp standalone binary
