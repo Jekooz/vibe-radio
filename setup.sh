@@ -18,14 +18,19 @@ echo "[1/8] Updating system..."
 apt update && apt upgrade -y
 
 echo "[2/8] Installing dependencies..."
-apt install -y icecast2 liquidsoap ffmpeg python3 python3-pip git curl
+apt install -y icecast2 liquidsoap ffmpeg python3 python3-pip git curl nodejs npm
 
 echo "[3/8] Installing yt-dlp..."
-pip3 install yt-dlp
+# Download latest yt-dlp standalone binary
+curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+chmod a+rx /usr/local/bin/yt-dlp
 
 echo "[4/8] Creating directory structure..."
-mkdir -p /opt/radio/{queue,requests,playlists,logs}
+mkdir -p /opt/radio/{queue,requests,playlists,logs,scripts}
 mkdir -p /var/log/liquidsoap
+cp -r scripts/* /opt/radio/scripts/ 2>/dev/null || true
+cp -r web /opt/radio/ 2>/dev/null || true
+cp -r liquidsoap/* /opt/radio/ 2>/dev/null || true
 
 # Set permissions (allow liquidsoap to write)
 chown -R ubuntu:ubuntu /opt/radio 2>/dev/null || true
